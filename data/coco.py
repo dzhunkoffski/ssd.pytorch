@@ -8,26 +8,27 @@ import torchvision.transforms as transforms
 import cv2
 import numpy as np
 
-COCO_ROOT = osp.join(HOME, 'data/coco/')
+COCO_ROOT = '/home/stud_lab_vk_01/ad-detection/data/processed/LogoDet1CocoV3'
 IMAGES = 'images'
 ANNOTATIONS = 'annotations'
 COCO_API = 'PythonAPI'
-INSTANCES_SET = 'instances_{}.json'
-COCO_CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
-                'train', 'truck', 'boat', 'traffic light', 'fire', 'hydrant',
-                'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
-                'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
-                'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
-                'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
-                'kite', 'baseball bat', 'baseball glove', 'skateboard',
-                'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
-                'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-                'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
-                'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
-                'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-                'keyboard', 'cell phone', 'microwave oven', 'toaster', 'sink',
-                'refrigerator', 'book', 'clock', 'vase', 'scissors',
-                'teddy bear', 'hair drier', 'toothbrush')
+INSTANCES_SET = 'instances_{}_fixed.json'
+# COCO_CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+#                 'train', 'truck', 'boat', 'traffic light', 'fire', 'hydrant',
+#                 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
+#                 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
+#                 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
+#                 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+#                 'kite', 'baseball bat', 'baseball glove', 'skateboard',
+#                 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+#                 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+#                 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+#                 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
+#                 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+#                 'keyboard', 'cell phone', 'microwave oven', 'toaster', 'sink',
+#                 'refrigerator', 'book', 'clock', 'vase', 'scissors',
+#                 'teddy bear', 'hair drier', 'toothbrush')
+COCO_CLASSES = ('logo')
 
 
 def get_label_map(label_file):
@@ -83,11 +84,11 @@ class COCODetection(data.Dataset):
         in the target (bbox) and transforms it.
     """
 
-    def __init__(self, root, image_set='trainval35k', transform=None,
+    def __init__(self, root, image_set='train', transform=None,
                  target_transform=COCOAnnotationTransform(), dataset_name='MS COCO'):
         sys.path.append(osp.join(root, COCO_API))
         from pycocotools.coco import COCO
-        self.root = osp.join(root, IMAGES, image_set)
+        self.root = osp.join(root, image_set, IMAGES)
         self.coco = COCO(osp.join(root, ANNOTATIONS,
                                   INSTANCES_SET.format(image_set)))
         self.ids = list(self.coco.imgToAnns.keys())

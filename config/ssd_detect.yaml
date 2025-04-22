@@ -1,0 +1,12 @@
+run_name: ???
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}___${run_name}
+  sweep:
+    dir: ./hydra_multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}___${run_name}
+    subdir: ${hydra.job.num}
+
+imgs: /home/stud_lab_vk_01/yolov9_modified/data/gambling-ad-detection.v2i.yolov9/train/images
+device: 0
+weights: /home/stud_lab_vk_01/ssd.pytorch/weights/ssd300_COCO_last.pth
+conf_thres: 0.25
