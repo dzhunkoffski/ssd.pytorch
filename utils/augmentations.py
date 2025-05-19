@@ -222,14 +222,14 @@ class RandomSampleCrop(object):
     def __init__(self):
         self.sample_options = [
             # using entire original input image
-            None,
+            # None,
             # sample a patch s.t. MIN jaccard w/ obj in .1,.3,.4,.7,.9
-            (0.1, None),
-            (0.3, None),
+            # (0.1, None),
+            # (0.3, None),
             (0.7, None),
-            (0.9, None),
+            # (0.9, None),
             # randomly sample a patch
-            (None, None),
+            # (None, None),
         ]
 
     def __call__(self, image, boxes=None, labels=None):
@@ -377,12 +377,12 @@ class SwapChannels(object):
 class PhotometricDistort(object):
     def __init__(self):
         self.pd = [
-            RandomContrast(),
+            RandomContrast(0.7, 1.3),
             ConvertColor(transform='HSV'),
-            RandomSaturation(),
-            RandomHue(),
+            RandomSaturation(0.7, 1.3),
+            RandomHue(delta=36.0),
             ConvertColor(current='HSV', transform='BGR'),
-            RandomContrast()
+            RandomContrast(0.7, 1.3)
         ]
         self.rand_brightness = RandomBrightness()
         self.rand_light_noise = RandomLightingNoise()

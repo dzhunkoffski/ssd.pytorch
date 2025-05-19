@@ -1,0 +1,14 @@
+run_name: ???
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}___${run_name}
+  sweep:
+    dir: ./hydra_multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}___${run_name}
+    subdir: ${hydra.job.num}
+
+labels: ...
+img_path: /home/stud_lab_vk_01/ad-detection/data/raw/gambling-ad-detection.v2i.yolov9/train/images
+
+how: row
+split_threshold: 0.1
+union_threshold: 0.05

@@ -12,6 +12,7 @@ if module_path not in sys.path:
 
 import matplotlib.pyplot as plt
 import torch
+import torchvision
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
@@ -80,28 +81,59 @@ def run(cfg):
         detections = y.data
         scale = torch.Tensor(img.shape[1::-1]).repeat(2)
 
-        # plt.figure(figsize=(10,10))
-        # colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
-        # plt.imshow(img)  # plot the image for matplotlib
-        # currentAxis = plt.gca()
+        plt.figure(figsize=(10,10))
+        colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
+        plt.imshow(img)  # plot the image for matplotlib
+        currentAxis = plt.gca()
 
-        for i in range(detections.size(1)):
-            j = 0
-            annots = []
-            while detections[0, i,j, 0] > cfg['conf_thres']:
-                score = detections[0,i,j,0]
-                pt = (detections[0,i,j,1:]*scale).cpu().numpy()
-                coords = (pt[0], pt[1]), pt[2]-pt[0]+1, pt[3]-pt[1]+1
-                # currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='red', linewidth=2))
-                # display_txt = '%s: %.2f'%('logo', score)
-                # currentAxis.text(pt[0], pt[1], display_txt, bbox={'facecolor':'red', 'alpha':0.5})
-                j += 1
-                annots.append(make_yolo_annotation(img.shape[:-1], pt, score))
+        annots = []
+        if cfg['apply_nms'] == False:
+            for i in range(detections.size(1)):
+                j = 0
+                while detections[0, i,j, 0] > cfg['conf_thres']:
+                    score = detections[0,i,j,0]
+                    pt = (detections[0,i,j,1:]*scale).cpu().numpy()
+                    coords = (pt[0], pt[1]), pt[2]-pt[0]+1, pt[3]-pt[1]+1
+                    currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='red', linewidth=2))
+                    display_txt = '%s: %.2f'%('logo', score)
+                    currentAxis.text(pt[0], pt[1], display_txt, bbox={'facecolor':'red', 'alpha':0.5})
+                    j += 1
+                    annots.append(make_yolo_annotation(img.shape[:-1], pt, score))
+        else:
+            try:
+                scores = []
+                boxes = []
+                for i in range(detections.size(1)):
+                    for j in range(detections.size(2)):
+                        score = detections[0,i,j,0]
+                        if score > 0.2:
+                            pt = (detections[0,i,j,1:]*scale).cpu().squeeze().unsqueeze(0)
+                            boxes.append(pt)
+                            scores.append(score)
+                scores = torch.tensor(scores)
+                boxes = torch.cat(boxes, dim=0)
+                boxes_ixs = torchvision.ops.nms(boxes.cpu(), scores.cpu(), iou_threshold=0.2)
+                
+                boxes = boxes[boxes_ixs]
+                scores = scores[boxes_ixs]
+                # log.info(scores)
+                for i in range(scores.size(0)):
+                    score = scores[i].item()
+                    pt = boxes[i].cpu().numpy()
+                    coords = (pt[0], pt[1]), pt[2]-pt[0]+1, pt[3]-pt[1]+1
+                    currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='red', linewidth=2))
+                    display_txt = '%s: %.2f'%('logo', score)
+                    currentAxis.text(pt[0], pt[1], display_txt, bbox={'facecolor':'red', 'alpha':0.5})
+                    annots.append(make_yolo_annotation(img.shape[:-1], pt, score))
+            except Exception as e:
+                pass
+
+
         postproc_time_inf.append(time.time() - st)
         
         with open(os.path.join(save_lbl_to, f'{img_name}.txt'), "w") as f:
             f.write("\n".join(annots))
-        # plt.savefig(os.path.join(save_img_to, f'{img_name}.png'))
+        plt.savefig(os.path.join(save_img_to, f'{img_name}.png'))
 
     print(f'PREPROC: {np.array(preproc_time_inf).mean()}')
     print(f'MODEL: {np.array(model_time_inf).mean()}')

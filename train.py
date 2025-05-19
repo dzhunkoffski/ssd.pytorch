@@ -14,8 +14,9 @@ import torch.nn.init as init
 import torch.utils.data as data
 import numpy as np
 import argparse
+import matplotlib.pyplot as plt
 
-torch.set_default_device('cuda:3')
+# torch.set_default_device('cuda:3')
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
@@ -106,12 +107,15 @@ def train():
         print('Resuming training, loading {}...'.format(args.resume))
         ssd_net.load_weights(args.resume)
     else:
-        vgg_weights = torch.load(args.save_folder + args.basenet)
+        vgg_weights = torch.load('weights/' + args.basenet)
         print('Loading base network...')
         ssd_net.vgg.load_state_dict(vgg_weights)
 
     if args.cuda:
         net = net.cuda()
+
+    if not os.path.exists(args.save_folder):
+        os.makedirs(args.save_folder, exists_ok=True)
 
     if not args.resume:
         print('Initializing weights...')
@@ -166,7 +170,27 @@ def train():
             adjust_learning_rate(optimizer, args.gamma, step_index)
 
         # load train data
-        images, targets = next(batch_iterator)
+        try:
+            images, targets = next(batch_iterator)
+        except StopIteration:
+            batch_iterator = iter(data_loader)
+            images, targets = next(batch_iterator)
+
+        if iteration % 1000 == 0:
+            print(targets)
+            plt.figure(figsize=(10,10))
+            colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
+            plt.imshow(images[0].cpu().permute(1,2,0).numpy())  # plot the image for matplotlib
+            currentAxis = plt.gca()
+
+            for t in targets[0]:
+                points = (300 * t).squeeze().int()
+                print(points)
+                coords = (points[0], points[1]), points[2] - points[0] + 1, points[3] - points[1] + 1
+                currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='red', linewidth=2))
+                display_txt = '%s: %.2f'%('logo', 1.0)
+                currentAxis.text(points[0], points[1], display_txt, bbox={'facecolor':'red', 'alpha':0.5})
+            plt.savefig(os.path.join(args.save_folder, f'batch_{iteration % 10000}.png'))
 
         if args.cuda:
             images = Variable(images.cuda())
@@ -195,9 +219,9 @@ def train():
             update_vis_plot(iteration, loss_l.data, loss_c.data,
                             iter_plot, epoch_plot, 'append')
 
-        if iteration != 0 and iteration % 5000 == 0:
+        if iteration != 0 and iteration % 50000 == 0:
             print('Saving state, iter:', iteration)
-            torch.save(ssd_net.state_dict(), 'weights/ssd300_COCO_' +
+            torch.save(ssd_net.state_dict(), f'{args.save_folder}ssd300_COCO_' +
                        repr(iteration) + '.pth')
     torch.save(ssd_net.state_dict(),
                args.save_folder + '' + args.dataset + '.pth')

@@ -128,3 +128,5 @@ data/ssd_dataloader.py
 .pylintrc
 
 outputs
+*.pth
+batch_*.png
