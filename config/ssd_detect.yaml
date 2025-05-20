@@ -8,7 +8,7 @@ hydra:
 
 imgs: /home/stud_lab_vk_01/ad-detection/data/raw/gambling-ad-detection.v2i.yolov9/train/images
 device: 0
-weights: /home/stud_lab_vk_01/ssd.pytorch/weights/ssd300_COCO_last.pth
+weights: ...
 conf_thres: 0.25
 
 apply_nms: false

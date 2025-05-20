@@ -21,7 +21,7 @@ import numpy as np
 import cv2
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
-    torch.set_default_device(1)
+    torch.set_default_device(0)
 
 from ssd import build_ssd
 

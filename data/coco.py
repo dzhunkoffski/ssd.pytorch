@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 import cv2
 import numpy as np
 
-COCO_ROOT = '/home/stud_lab_vk_01/ad-detection/data/processed/LogoDet1CocoV3'
+# COCO_ROOT = '/home/stud_lab_vk_01/ad-detection/data/processed/LogoDet1CocoV3'
 IMAGES = 'images'
 ANNOTATIONS = 'annotations'
 COCO_API = 'PythonAPI'
@@ -44,8 +44,8 @@ class COCOAnnotationTransform(object):
     """Transforms a COCO annotation into a Tensor of bbox coords and label index
     Initilized with a dictionary lookup of classnames to indexes
     """
-    def __init__(self):
-        self.label_map = get_label_map(osp.join(COCO_ROOT, 'coco_labels.txt'))
+    def __init__(self, coco_root: str):
+        self.label_map = get_label_map(osp.join(coco_root, 'coco_labels.txt'))
 
     def __call__(self, target, width, height):
         """
@@ -84,8 +84,8 @@ class COCODetection(data.Dataset):
         in the target (bbox) and transforms it.
     """
 
-    def __init__(self, root, image_set='train', transform=None,
-                 target_transform=COCOAnnotationTransform(), dataset_name='MS COCO'):
+    def __init__(self, root, image_set='train', transform=None, dataset_name='MS COCO'):
+        target_transform=COCOAnnotationTransform(coco_root=root)
         sys.path.append(osp.join(root, COCO_API))
         from pycocotools.coco import COCO
         self.root = osp.join(root, image_set, IMAGES)
