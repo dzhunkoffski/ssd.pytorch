@@ -34,7 +34,7 @@ net.load_weights(WEIGHT_PATH)
 
 # clean train
 PART = 'train'
-THRESHOLD = 0.75
+THRESHOLD = 0.3
 
 n_deleted = 0
 for img_p in tqdm(train_imgs):

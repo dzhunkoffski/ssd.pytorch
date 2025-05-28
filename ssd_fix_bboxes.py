@@ -32,7 +32,7 @@ def mid2corner(bbox):
         bbox[1] + 0.5 * bbox[3]
     )
 
-def row_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float, union_threshold: float):
+def row_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float, union_threshold: float, remain_old: bool):
     corner_bboxes = []
     for line in yolo_labels:
         corner_bboxes.append(mid2corner(list(map(float, line.split()[1:]))))
@@ -48,8 +48,14 @@ def row_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float, un
                 flag1 = i != j
                 flag2 = abs(current_bboxes[i][1] - current_bboxes[j][1]) < row_threshold and abs(current_bboxes[i][3] - current_bboxes[j][3]) < row_threshold
                 flag3 = abs(current_bboxes[i][0] - current_bboxes[j][2]) < union_threshold or abs(current_bboxes[i][2] - current_bboxes[j][0]) < union_threshold
-
-                if flag1 and flag2 and flag3:
+                new_bbox = [
+                    min(current_bboxes[i][0], current_bboxes[j][0]),
+                    min(current_bboxes[i][1], current_bboxes[j][1]),
+                    max(current_bboxes[i][2], current_bboxes[j][2]),
+                    max(current_bboxes[i][3], current_bboxes[j][3])
+                ]
+                flag4 = max((new_bbox[2] - new_bbox[0]) / (new_bbox[3] - new_bbox[1]), (new_bbox[3] - new_bbox[1]) / (new_bbox[2] - new_bbox[0])) < 10
+                if flag1 and flag2 and flag3 and flag4:
                     index_to_remove.append(i)
                     index_to_remove.append(j)
                     pairs_to_merge.append((i, j))
@@ -66,9 +72,12 @@ def row_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float, un
         t = [current_bboxes[i] for i in range(len(current_bboxes)) if i not in index_to_remove]
         current_bboxes = t
         current_bboxes += new_bboxes
-    return current_bboxes + corner_bboxes
 
-def column_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float, union_threshold: float):
+    if remain_old:
+        return current_bboxes + corner_bboxes
+    return current_bboxes
+
+def column_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float, union_threshold: float, remain_old: bool):
     corner_bboxes = []
     for line in yolo_labels:
         corner_bboxes.append(mid2corner(list(map(float, line.split()[1:]))))
@@ -85,7 +94,15 @@ def column_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float,
                 flag2 = abs(current_bboxes[i][0] - current_bboxes[j][0]) < row_threshold and abs(current_bboxes[i][2] - current_bboxes[j][2]) < row_threshold
                 flag3 = abs(current_bboxes[i][1] - current_bboxes[j][3]) < union_threshold or abs(current_bboxes[i][3] - current_bboxes[j][1]) < union_threshold
 
-                if flag1 and flag2 and flag3:
+                new_bbox = [
+                    min(current_bboxes[i][0], current_bboxes[j][0]),
+                    min(current_bboxes[i][1], current_bboxes[j][1]),
+                    max(current_bboxes[i][2], current_bboxes[j][2]),
+                    max(current_bboxes[i][3], current_bboxes[j][3])
+                ]
+                flag4 = max((new_bbox[2] - new_bbox[0]) / (new_bbox[3] - new_bbox[1]), (new_bbox[3] - new_bbox[1]) / (new_bbox[2] - new_bbox[0])) < 10
+
+                if flag1 and flag2 and flag3 and flag4:
                     index_to_remove.append(i)
                     index_to_remove.append(j)
                     pairs_to_merge.append((i, j))
@@ -102,7 +119,9 @@ def column_merge_labels_bruteforce(yolo_labels: List[str], row_threshold: float,
         t = [current_bboxes[i] for i in range(len(current_bboxes)) if i not in index_to_remove]
         current_bboxes = t
         current_bboxes += new_bboxes
-    return current_bboxes + corner_bboxes
+    if remain_old:
+        return current_bboxes + corner_bboxes
+    return current_bboxes
 
 def row_merge_labels(yolo_labels: List[str], row_threshold: float, union_threshold: float):
     corner_bboxes = []
@@ -208,9 +227,15 @@ def run(cfg):
         with open(lbl_file, 'r') as fd:
             lbl_lines = fd.readlines()
             if cfg['how'] == 'row':
-                new_bboxes = row_merge_labels_bruteforce(lbl_lines, cfg['split_threshold'], cfg['union_threshold'])
+                new_bboxes = row_merge_labels_bruteforce(
+                    lbl_lines, cfg['split_threshold'],
+                    cfg['union_threshold'], remain_old=cfg['remain_old']
+                )
             elif cfg['how'] == 'column':
-                new_bboxes = column_merge_labels(lbl_lines, cfg['split_threshold'], cfg['union_threshold'])
+                new_bboxes = column_merge_labels_bruteforce(
+                    lbl_lines, cfg['split_threshold'],
+                    cfg['union_threshold'], remain_old=cfg['remain_old']
+                )
         annots = []
         for bbox in new_bboxes:
             bbox = (bbox[0] * width, bbox[1] * height, bbox[2] * width, bbox[3] * height)

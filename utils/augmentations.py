@@ -377,14 +377,14 @@ class SwapChannels(object):
 class PhotometricDistort(object):
     def __init__(self):
         self.pd = [
-            RandomContrast(0.7, 1.3),
+            RandomContrast(0.85, 1.15),
             ConvertColor(transform='HSV'),
-            RandomSaturation(0.7, 1.3),
-            RandomHue(delta=36.0),
+            RandomSaturation(0.85, 1.15),
+            RandomHue(delta=18.0),
             ConvertColor(current='HSV', transform='BGR'),
-            RandomContrast(0.7, 1.3)
+            RandomContrast(0.85, 1.15)
         ]
-        self.rand_brightness = RandomBrightness()
+        self.rand_brightness = RandomBrightness(16)
         self.rand_light_noise = RandomLightingNoise()
 
     def __call__(self, image, boxes, labels):

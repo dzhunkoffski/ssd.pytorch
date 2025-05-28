@@ -5,6 +5,7 @@ import json
 import subprocess
 import time
 from tqdm import tqdm
+from PIL import Image
 
 import sys
 module_path = os.path.abspath(os.path.join('..'))
@@ -25,6 +26,7 @@ if torch.cuda.is_available():
 from ssd import build_ssd
 
 DATASET_PATH = '/home/stud_lab_vk_01/ad-detection/data/processed/LogoDet1YoloV4_filter'
+os.makedirs(os.path.join(DATASET_PATH, 'removed_imgs'), exist_ok=True)
 val_imgs = glob.glob(os.path.join(DATASET_PATH, 'images', 'val', '**.jpg'))
 before_filter = len(val_imgs)
 
@@ -34,8 +36,7 @@ net.load_weights(WEIGHT_PATH)
 
 # clean train
 PART = 'val'
-THRESHOLD = 0.75
-
+THRESHOLD = 0.3
 n_deleted = 0
 for img_p in tqdm(val_imgs):
     img_name = Path(img_p).stem
@@ -77,6 +78,8 @@ for img_p in tqdm(val_imgs):
         good_scores = scores[scores > THRESHOLD]
         if len(good_scores) - n_boxes > 1:
             n_deleted += 1
+            img = Image.open(img_p)
+            img.save(os.path.join(DATASET_PATH, 'removed_imgs', f'{img_name}.png'))
             os.remove(img_p)
             os.remove(label_path)
     except Exception as e:

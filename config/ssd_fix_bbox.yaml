@@ -12,3 +12,4 @@ img_path: /home/stud_lab_vk_01/ad-detection/data/raw/gambling-ad-detection.v2i.y
 how: row
 split_threshold: 0.1
 union_threshold: 0.05
+remain_old: false
