@@ -22,6 +22,7 @@ if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 from ssd import build_ssd
+from ssd_mobilenet import build_mobilenet_ssd
 
 import hydra
 
@@ -51,7 +52,10 @@ def run(cfg):
     imgs = glob.glob(os.path.join(cfg['imgs'], '**.jpg'))
     log.info(f'FOUND {len(imgs)} images')
 
-    net = build_ssd('test', 300, 2)    # initialize SSD
+    if cfg['backbone'] == 'vgg':
+        net = build_ssd('test', 300, 2)    # initialize SSD
+    else:
+        net = build_mobilenet_ssd('test', 300, 2)
     net.load_weights(cfg['weights'])
 
     preproc_time_inf = []

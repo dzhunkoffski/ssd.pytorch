@@ -2,6 +2,7 @@ from data import *
 from utils.augmentations import SSDAugmentation
 from layers.modules import MultiBoxLoss
 from ssd import build_ssd
+from ssd_mobilenet import build_mobilenet_ssd
 import os
 import sys
 import time
@@ -29,6 +30,7 @@ parser.add_argument('--dataset', default='VOC', choices=['VOC', 'COCO'],
                     type=str, help='VOC or COCO')
 parser.add_argument('--dataset_root', default=VOC_ROOT,
                     help='Dataset root directory path')
+parser.add_argument('--backbone', default='vgg')
 parser.add_argument('--basenet', default='vgg16_reducedfc.pth',
                     help='Pretrained base model')
 parser.add_argument('--batch_size', default=32, type=int,
@@ -96,7 +98,12 @@ def train():
         import visdom
         viz = visdom.Visdom()
 
-    ssd_net = build_ssd('train', cfg['min_dim'], cfg['num_classes'])
+    if args.backbone == 'vgg':
+        ssd_net = build_ssd('train', cfg['min_dim'], cfg['num_classes'])
+    elif args.backbone == 'mobilenet':
+        ssd_net = build_mobilenet_ssd('train', cfg['min_dim'], cfg['num_classes'])
+    else:
+        raise NotImplementedError
     net = ssd_net
 
     if args.cuda:
@@ -106,7 +113,7 @@ def train():
     if args.resume:
         print('Resuming training, loading {}...'.format(args.resume))
         ssd_net.load_weights(args.resume)
-    else:
+    elif args.backbone == 'vgg':
         vgg_weights = torch.load('weights/' + args.basenet)
         print('Loading base network...')
         ssd_net.vgg.load_state_dict(vgg_weights)
@@ -219,7 +226,7 @@ def train():
             update_vis_plot(iteration, loss_l.data, loss_c.data,
                             iter_plot, epoch_plot, 'append')
 
-        if iteration != 0 and iteration % 50000 == 0:
+        if iteration % 50000 == 0:
             print('Saving state, iter:', iteration)
             torch.save(ssd_net.state_dict(), f'{args.save_folder}ssd300_COCO_' +
                        repr(iteration) + '.pth')

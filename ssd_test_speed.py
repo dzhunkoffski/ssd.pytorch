@@ -24,6 +24,7 @@ if torch.cuda.is_available():
     torch.set_default_device(0)
 
 from ssd import build_ssd
+from ssd_mobilenet import build_mobilenet_ssd
 
 import hydra
 
@@ -31,7 +32,12 @@ import logging
 log = logging.getLogger(__name__)
 
 def run(cfg):
-    net = build_ssd('test', 300, 2)
+    if cfg.backbone == 'vgg':
+        net = build_ssd('train', 300, 2)
+    elif cfg.backbone == 'mobilenet':
+        net = build_mobilenet_ssd('train', 300, 2)
+    else:
+        raise NotImplementedError
     net.load_weights(cfg.weights)
     net = net.cuda()
     net.eval()
@@ -54,6 +60,7 @@ def run(cfg):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', type=str)
+    parser.add_argument('--backbone', type=str)
     parser.add_argument('--batch_size', type=str)
 
     opt_parser = parser.parse_args()

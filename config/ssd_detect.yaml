@@ -11,4 +11,6 @@ device: 0
 weights: ...
 conf_thres: 0.25
 
+backbone: vgg
+
 apply_nms: false
